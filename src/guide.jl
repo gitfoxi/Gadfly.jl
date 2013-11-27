@@ -45,6 +45,30 @@ function render(guide::PanelBackground, theme::Gadfly.Theme,
 end
 
 
+immutable ZoomSlider <: Gadfly.GuideElement
+end
+
+const zoomslider = ZoomSlider
+
+
+function render(guide::ZoomSlider, theme::Gadfly.Theme,
+                aess::Vector{Gadfly.Aesthetics})
+
+    println(STDERR, "ZOOM SLIDER!!!")
+    # TODO: What does this thing look like? Figure out the geometry as best as
+    # possible. We need to set it to hidden by default also. This is placeholder
+    # geometry.
+    slider = compose(canvas(d3only=true),
+                     rectangle(1w - 10mm, 0w, 10mm, 10mm),
+                     fill("red"),
+                     svgclass("guide zoomslider"),
+                     d3embed(".on()"),
+                     d3embed(".on()"))
+
+    {(slider, over_guide_position)}
+end
+
+
 immutable ColorKey <: Gadfly.GuideElement
     title::Union(String, Nothing)
 
@@ -555,6 +579,8 @@ function layout_guides(plot_canvas::Canvas,
             push!(left_guides, guide)
         elseif pos === under_guide_position
             push!(under_guides, guide)
+        elseif pos === over_guide_position
+            push!(over_guides, guide)
         end
     end
 

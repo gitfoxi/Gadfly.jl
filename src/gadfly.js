@@ -243,8 +243,36 @@ var zoom_behavior = function(t) {
              "y": ty,
              "scale": t.scale}, old_scale);
         zm.translate([tx, ty]);
+
+        // TODO: set zoom slider position
     });
     return zm;
+};
+
+
+// Construct a call
+var zoomslider_behavior = function(t) {
+    var drag = d3.behavior.drag();
+    drag.on("drag", function() {
+        // TODO: Ignore x-movement. We need an upper and lower
+        // bound to track y-movement.
+        //
+        // Use the relation to its upper and lower bound to set the zoom.
+        //
+        // Easy enough, but where to we get the lower/upper bounds from? We
+        // could use some other geometry to orient ourselves, but this feels
+        // like a hack.
+        //
+        // What I'd like is to pass the absolute position to the
+        // "zoomslider_behavior" function". But absolute positions are not
+        // knowns when that property is added.
+        //
+        // Can I introduce a new property that does conversions for arbitrary
+        // arguments? Could I d3embed do that? I need some sort of template
+        // system. Mustache is a posibility. More dependencies are depressing
+        // though.
+    });
+    return drag;
 };
 
 
