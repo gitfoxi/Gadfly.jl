@@ -1,5 +1,10 @@
 
 
+// Minimum and maximum scale extents
+var MIN_SCALE = 1.0/3.0;
+var MAX_SCALE = 10.0;
+
+
 // Traverse upwards from a d3 selection to find and return the first
 // node with "plotroot" class.
 var getplotroot = function(selection)  {
@@ -105,6 +110,8 @@ var geom_point_mouseover = function(lw) {
 //   old_scale: The scaling factor applied prior to t.scale.
 //
 var set_geometry_transform = function(root, t, old_scale) {
+    //console.info([t, old_scale]);
+
     var xscalable = root.node().classList.contains("xscalable");
     var yscalable = root.node().classList.contains("yscalable");
 
@@ -123,10 +130,9 @@ var set_geometry_transform = function(root, t, old_scale) {
     }
 
     root.selectAll(".geometry")
-        .attr("transform", function() {
-          return "translate(" + [tx, ty] + ") " +
-                 "scale(" + xscale + "," + yscale + ")";
-      });
+        .attr("transform",
+          "translate(" + tx + " " + ty + ") " +
+              "scale(" + xscale + " " + yscale + ")");
 
     var unscale_factor = old_scale / t.scale;
 
@@ -215,7 +221,7 @@ var set_geometry_transform = function(root, t, old_scale) {
 //
 var zoom_behavior = function(t) {
     var zm = d3.behavior.zoom();
-    zm.scaleExtent([1.0/3.0, 10.0])
+    zm.scaleExtent([MIN_SCALE, MAX_SCALE])
       .on("zoom", function(d, i) {
         var root = getplotroot(d3.select(this));
         old_scale = t.scale;
@@ -250,29 +256,68 @@ var zoom_behavior = function(t) {
 };
 
 
+var slider_position_from_scale = function(scale) {
+    if (scale >= 1.0) {
+        return 0.5 + 0.5 * (Math.log(scale) / Math.log(MAX_SCALE));
+    }
+    else {
+        return 0.5 * (Math.log(scale) - Math.log(MIN_SCALE)) / (0 - Math.log(MIN_SCALE));
+    }
+};
+
+
 // Construct a call
-var zoomslider_behavior = function(t) {
+var zoomslider_behavior = function(t, min_extent, max_extent) {
     var drag = d3.behavior.drag();
     drag.on("drag", function() {
-        // TODO: Ignore x-movement. We need an upper and lower
-        // bound to track y-movement.
-        //
-        // Use the relation to its upper and lower bound to set the zoom.
-        //
-        // Easy enough, but where to we get the lower/upper bounds from? We
-        // could use some other geometry to orient ourselves, but this feels
-        // like a hack.
-        //
-        // What I'd like is to pass the absolute position to the
-        // "zoomslider_behavior" function". But absolute positions are not
-        // knowns when that property is added.
-        //
-        // Can I introduce a new property that does conversions for arbitrary
-        // arguments? Could I d3embed do that? I need some sort of template
-        // system. Mustache is a posibility. More dependencies are depressing
-        // though.
+        var xmid = (min_extent + max_extent) / 2;
+        var new_scale;
+
+        // current slider posisition
+        var xpos = slider_position_from_scale(t.scale) +
+            (d3.event.dx / (max_extent - min_extent));
+
+        // new scale
+        if (xpos >= 0.5) {
+            new_scale = Math.exp(2.0 * (xpos - 0.5) * Math.log(MAX_SCALE));
+        }
+        else {
+            new_scale = Math.exp(2.0 * xpos * (0 - Math.log(MIN_SCALE)) +
+                Math.log(MIN_SCALE));
+        }
+        new_scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, new_scale));
+
+        // update scale
+        // TODO: we should be zooming from the center, not the upper left corner
+        var old_scale = t.scale;
+        t.scale = new_scale;
+        var root = getplotroot(d3.select(this));
+        set_geometry_transform(
+            root,
+            {"x": t.x, "y": t.y, "scale": new_scale},
+            old_scale);
+
+        // update slider position
+        xpos = min_extent + ((max_extent - min_extent) * slider_position_from_scale(new_scale));
+        d3.select(this)
+          .attr("transform", "translate(" + (xpos - xmid) + " " + 0 + ")");
     });
     return drag;
+};
+
+
+
+var zoomout_behavior = function(t) {
+    return (function() {
+        console.info("zoom_out");
+    });
+};
+
+
+var zoomin_behavior = function(t) {
+    return (function() {
+        console.info("zoom_in");
+    });
 };
 
 

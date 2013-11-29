@@ -54,18 +54,57 @@ const zoomslider = ZoomSlider
 function render(guide::ZoomSlider, theme::Gadfly.Theme,
                 aess::Vector{Gadfly.Aesthetics})
 
-    println(STDERR, "ZOOM SLIDER!!!")
-    # TODO: What does this thing look like? Figure out the geometry as best as
-    # possible. We need to set it to hidden by default also. This is placeholder
-    # geometry.
-    slider = compose(canvas(d3only=true),
-                     rectangle(1w - 10mm, 0w, 10mm, 10mm),
-                     fill("red"),
-                     svgclass("guide zoomslider"),
-                     d3embed(".on()"),
-                     d3embed(".on()"))
+    pad = 3mm
+    button_size = 4mm
+    slider_size = 20mm
+    background_color = "#eaeaea"
+    foreground_color = "#6a6a6a"
 
-    {(slider, over_guide_position)}
+    minus_button = compose(canvas(1w - pad - 2*button_size - slider_size, pad,
+                                  button_size, button_size),
+                           rectangle(),
+                           (polygon((0.2, 0.4), (0.8, 0.4),
+                                    (0.8, 0.6), (0.2, 0.6)),
+                            stroke(nothing),
+                            fill(foreground_color)),
+                           fill(background_color),
+                           d3embed(".on(\"click\", zoomout_behavior(t))"))
+
+    slider_min_pos = 1w - pad - button_size - slider_size
+    slider_max_pos = 1w - pad - button_size
+    slider_width = 2mm
+    slider = compose(canvas(1w - pad - button_size - slider_size, pad,
+                            slider_size, button_size),
+                     (rectangle(),
+                      fill(background_color)),
+                     (rectangle(0.5cx - slider_width/5, 0.0, slider_width, 1h),
+                      stroke(nothing),
+                      fill(foreground_color),
+                      d3embed(".call(zoomslider_behavior(t, %x, %x))",
+                           slider_min_pos, slider_max_pos)))
+
+
+    plus_button = compose(canvas(1w - pad - button_size, pad,
+                                    button_size, button_size),
+                          rectangle(),
+                          (polygon((0.2, 0.4), (0.4, 0.4), (0.4, 0.2),
+                                   (0.6, 0.2), (0.6, 0.4), (0.8, 0.4),
+                                   (0.8, 0.6), (0.6, 0.6), (0.6, 0.8),
+                                   (0.4, 0.8), (0.4, 0.6), (0.2, 0.6)),
+                           stroke(nothing),
+                           fill(foreground_color)),
+                          fill(background_color),
+                          d3embed(".on(\"click\", zoomout_behavior(t))"))
+
+    root = compose(canvas(d3only=true),
+                   minus_button,
+                   slider,
+                   plus_button,
+                   stroke(theme.panel_fill),
+                   #stroke(foreground_color),
+                   svgclass("guide zoomslider"))
+
+    {(root, over_guide_position)}
 end
 
 
