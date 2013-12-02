@@ -54,53 +54,54 @@ const zoomslider = ZoomSlider
 function render(guide::ZoomSlider, theme::Gadfly.Theme,
                 aess::Vector{Gadfly.Aesthetics})
 
-    pad = 3mm
+    edge_pad = 3mm
+    slide_pad = 0.5mm
     button_size = 4mm
     slider_size = 20mm
     background_color = "#eaeaea"
     foreground_color = "#6a6a6a"
 
-    minus_button = compose(canvas(1w - pad - 2*button_size - slider_size, pad,
-                                  button_size, button_size),
+    minus_button = compose(canvas(1w - edge_pad - 2*button_size - slider_size,
+                                  edge_pad, button_size, button_size),
                            rectangle(),
                            (polygon((0.2, 0.4), (0.8, 0.4),
                                     (0.8, 0.6), (0.2, 0.6)),
-                            stroke(nothing),
                             fill(foreground_color)),
                            fill(background_color),
-                           d3embed(".on(\"click\", zoomout_behavior(t))"))
+                           d3embed(".on(\"click\", zoomout_behavior(ctx))"))
 
-    slider_min_pos = 1w - pad - button_size - slider_size
-    slider_max_pos = 1w - pad - button_size
     slider_width = 2mm
-    slider = compose(canvas(1w - pad - button_size - slider_size, pad,
-                            slider_size, button_size),
+    slider_xpos = 1w - edge_pad - button_size - slider_size + slide_pad
+
+    slider_min_pos = slider_xpos + slider_width/2
+    slider_max_pos = slider_xpos + slider_size - 2*slide_pad - slider_width/2
+
+    slider = compose(canvas(slider_xpos,
+                            edge_pad, slider_size - 2 * slide_pad, button_size),
                      (rectangle(),
                       fill(background_color)),
-                     (rectangle(0.5cx - slider_width/5, 0.0, slider_width, 1h),
-                      stroke(nothing),
+                     (rectangle(0.5cx - slider_width/2, 0.0, slider_width, 1h),
                       fill(foreground_color),
-                      d3embed(".call(zoomslider_behavior(t, %x, %x))",
+                      d3embed(".call(zoomslider_behavior(ctx, %x, %x))",
                            slider_min_pos, slider_max_pos)))
 
 
-    plus_button = compose(canvas(1w - pad - button_size, pad,
+    plus_button = compose(canvas(1w - edge_pad - button_size, edge_pad,
                                     button_size, button_size),
                           rectangle(),
                           (polygon((0.2, 0.4), (0.4, 0.4), (0.4, 0.2),
                                    (0.6, 0.2), (0.6, 0.4), (0.8, 0.4),
                                    (0.8, 0.6), (0.6, 0.6), (0.6, 0.8),
                                    (0.4, 0.8), (0.4, 0.6), (0.2, 0.6)),
-                           stroke(nothing),
                            fill(foreground_color)),
                           fill(background_color),
-                          d3embed(".on(\"click\", zoomout_behavior(t))"))
+                          d3embed(".on(\"click\", zoomout_behavior(ctx))"))
 
     root = compose(canvas(d3only=true),
                    minus_button,
                    slider,
                    plus_button,
-                   stroke(theme.panel_fill),
+                   stroke(nothing),
                    #stroke(foreground_color),
                    svgclass("guide zoomslider"))
 
@@ -685,7 +686,7 @@ function layout_guides(plot_canvas::Canvas,
                     ".on(\"mouseout\", guide_background_mouseout(%s))",
                     json(theme.grid_color))),
                 isempty(under_guides) ?
-                    nothing : d3embed(".call(zoom_behavior(t))")),
+                    nothing : d3embed(".call(zoom_behavior(ctx))")),
             top_guides, right_guides, bottom_guides, left_guides)
 end
 

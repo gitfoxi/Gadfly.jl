@@ -109,7 +109,7 @@ var geom_point_mouseover = function(lw) {
 //   t: A transform of the form {"scale": scale}
 //   old_scale: The scaling factor applied prior to t.scale.
 //
-var set_geometry_transform = function(root, t, old_scale) {
+var set_geometry_transform = function(root, ctx, old_scale) {
     //console.info([t, old_scale]);
 
     var xscalable = root.node().classList.contains("xscalable");
@@ -118,15 +118,15 @@ var set_geometry_transform = function(root, t, old_scale) {
     var xscale = 1.0;
     var tx = 0.0;
     if (xscalable) {
-        xscale = t.scale;
-        tx = t.x;
+        xscale = ctx.scale;
+        tx = ctx.x;
     }
 
     var yscale = 1.0;
     var ty = 0.0;
     if (yscalable) {
-        yscale = t.scale;
-        ty = t.y;
+        yscale = ctx.scale;
+        ty = ctx.y;
     }
 
     root.selectAll(".geometry")
@@ -134,7 +134,7 @@ var set_geometry_transform = function(root, t, old_scale) {
           "translate(" + tx + " " + ty + ") " +
               "scale(" + xscale + " " + yscale + ")");
 
-    var unscale_factor = old_scale / t.scale;
+    var unscale_factor = old_scale / ctx.scale;
 
     // unscale geometry widths, radiuses, etc.
     var size_attribs = ["r"];
@@ -176,36 +176,36 @@ var set_geometry_transform = function(root, t, old_scale) {
     if (xscalable) {
         root.selectAll(".yfixed")
             .attr("transform", function() {
-                return "translate(" + [t.x, 0.0] + ") " +
-                       "scale(" + [t.scale, 1.0] + ")";
+                return "translate(" + [ctx.x, 0.0] + ") " +
+                       "scale(" + [ctx.scale, 1.0] + ")";
           });
 
         root.selectAll(".xlabels")
             .attr("transform", function() {
-              return "translate(" + [t.x, 0.0] + ")";
+              return "translate(" + [ctx.x, 0.0] + ")";
           })
           .selectAll("text")
             .each(function() {
                 d3.select(this).attr("x",
-                    t.scale / old_scale * d3.select(this).attr("x"));
+                    ctx.scale / old_scale * d3.select(this).attr("x"));
             });
     }
 
     if (yscalable) {
         root.selectAll(".xfixed")
             .attr("transform", function() {
-              return "translate(" + [0.0, t.y] + ") " +
-                     "scale(" + [1.0, t.scale] + ")";
+              return "translate(" + [0.0, ctx.y] + ") " +
+                     "scale(" + [1.0, ctx.scale] + ")";
             });
 
         root.selectAll(".ylabels")
             .attr("transform", function() {
-              return "translate(" + [0.0, t.y] + ")";
+              return "translate(" + [0.0, ctx.y] + ")";
             })
             .selectAll("text")
               .each(function() {
                   d3.select(this).attr("y",
-                      t.scale / old_scale * d3.select(this).attr("y"));
+                      ctx.scale / old_scale * d3.select(this).attr("y"));
             });
     }
 };
@@ -219,23 +219,25 @@ var set_geometry_transform = function(root, t, old_scale) {
 // Returns:
 //   A zoom behavior.
 //
-var zoom_behavior = function(t) {
+var zoom_behavior = function(ctx) {
     var zm = d3.behavior.zoom();
+    ctx.zoom_behavior = zm;
+
     zm.scaleExtent([MIN_SCALE, MAX_SCALE])
       .on("zoom", function(d, i) {
         var root = getplotroot(d3.select(this));
-        old_scale = t.scale;
-        t.scale = d3.event.scale;
+        old_scale = ctx.scale;
+        ctx.scale = d3.event.scale;
         var bbox = root.select(".guide.background")
                        .select("path").node().getBBox();
 
-        var x_min = -bbox.width * t.scale - (t.scale * bbox.width - bbox.width);
-        var x_max = bbox.width * t.scale;
-        var y_min = -bbox.height * t.scale - (t.scale * bbox.height - bbox.height);
-        var y_max = bbox.height * t.scale;
+        var x_min = -bbox.width * ctx.scale - (ctx.scale * bbox.width - bbox.width);
+        var x_max = bbox.width * ctx.scale;
+        var y_min = -bbox.height * ctx.scale - (ctx.scale * bbox.height - bbox.height);
+        var y_max = bbox.height * ctx.scale;
 
-        var x0 = bbox.x - t.scale * bbox.x;
-        var y0 = bbox.y - t.scale * bbox.y;
+        var x0 = bbox.x - ctx.scale * bbox.x;
+        var y0 = bbox.y - ctx.scale * bbox.y;
 
         var tx = Math.max(Math.min(d3.event.translate[0] - x0, x_max), x_min);
         var ty = Math.max(Math.min(d3.event.translate[1] - y0, y_max), y_min);
@@ -247,7 +249,7 @@ var zoom_behavior = function(t) {
             root,
             {"x": tx,
              "y": ty,
-             "scale": t.scale}, old_scale);
+             "scale": ctx.scale}, old_scale);
         zm.translate([tx, ty]);
 
         // TODO: set zoom slider position
@@ -267,14 +269,15 @@ var slider_position_from_scale = function(scale) {
 
 
 // Construct a call
-var zoomslider_behavior = function(t, min_extent, max_extent) {
+var zoomslider_behavior = function(ctx, min_extent, max_extent) {
+    console.info([min_extent, max_extent]);
     var drag = d3.behavior.drag();
     drag.on("drag", function() {
         var xmid = (min_extent + max_extent) / 2;
         var new_scale;
 
         // current slider posisition
-        var xpos = slider_position_from_scale(t.scale) +
+        var xpos = slider_position_from_scale(ctx.scale) +
             (d3.event.dx / (max_extent - min_extent));
 
         // new scale
@@ -289,13 +292,16 @@ var zoomslider_behavior = function(t, min_extent, max_extent) {
 
         // update scale
         // TODO: we should be zooming from the center, not the upper left corner
-        var old_scale = t.scale;
-        t.scale = new_scale;
+        ctx.zoom_behavior.scale(new_scale);
         var root = getplotroot(d3.select(this));
-        set_geometry_transform(
-            root,
-            {"x": t.x, "y": t.y, "scale": new_scale},
-            old_scale);
+        ctx.zoom_behavior.event(root);
+
+        //var old_scale = ctx.scale;
+        //ctx.scale = new_scale;
+        //set_geometry_transform(
+            //root,
+            //{"x": ctx.x, "y": ctx.y, "scale": new_scale},
+            //old_scale);
 
         // update slider position
         xpos = min_extent + ((max_extent - min_extent) * slider_position_from_scale(new_scale));
