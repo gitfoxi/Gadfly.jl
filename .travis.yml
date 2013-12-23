@@ -7,21 +7,10 @@ before_install:
     - sudo add-apt-repository ppa:staticfloat/julia-deps -y
     - sudo add-apt-repository ppa:staticfloat/julianightlies -y
     - sudo apt-get update -qq -y
-    - sudo apt-get install libpcre3-dev julia -y
-    - sudo apt-get install git -y
-    - sudo apt-get install gdb -y
+    - sudo apt-get install git libpcre3-dev julia -y
 script:
-    - julia --version
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
     - julia -e 'Pkg.init(); Pkg.add("Cairo"); Pkg.add("RDatasets")'
     - julia -e 'run(`ln -s $(pwd()) $(Pkg.dir("Gadfly"))`);'
-    - which git
-    - git --version
-    - git merge-base 1aa5e9a90006526f8955a5cd58be75ef8fbcd066 2adf6702482c65f1346050e0034c32e3eecbf80b
-    - git --work-tree=/home/travis/.julia/Gadfly --git-dir=/home/travis/.julia/Gadfly/.git merge-base 1aa5e9a90006526f8955a5cd58be75ef8fbcd066 2adf6702482c65f1346050e0034c32e3eecbf80b
-    - ls -la /home/travis/.julia/Gadfly
-    - ls -la
     - julia -e 'Pkg.pin("Gadfly"); Pkg.resolve()'
-    - cat script.gdb | gdb --args julia ~/.julia/Gadfly/tests/test.jl
-comment:
-    - Go travis go
+    - julia ~/.julia/Gadfly/tests/test.jl
