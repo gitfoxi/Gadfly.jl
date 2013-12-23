@@ -24,6 +24,9 @@
     color
     label
     titles, Dict{Symbol, String}, Dict{Symbol, String}()
+    alpha
+    fill
+#    linetype
 end
 
 

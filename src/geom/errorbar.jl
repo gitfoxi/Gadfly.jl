@@ -79,13 +79,13 @@ function render(geom::YErrorBarGeometry, theme::Gadfly.Theme, aes::Gadfly.Aesthe
             lines([[(x*cx - caplen, ymin), (x*cx + caplen, ymin)]
                    for (x, ymin) in zip(aes.x, aes.ymin)]...)),
 
-        stroke([theme.highlight_color(c) for c in aes.color]),
-        linewidth(theme.line_width),
-        aes.color_key_continuous == true ?
-            svgclass("geometry") :
-            svgclass([@sprintf("geometry color_%s",
-                escape_id(aes.color_label([c])[1]))
-                          for c in aes.color]))
+            stroke([theme.highlight_color(c) for c in aes.color]),
+            linewidth(theme.line_width),
+            aes.color_key_continuous == true ?
+                svgclass("geometry") :
+                svgclass([@sprintf("geometry color_%s",
+                    escape_id(aes.color_label([c])[1]))
+                              for c in aes.color]))
 end
 
 function render(geom::XErrorBarGeometry, theme::Gadfly.Theme, aes::Gadfly.Aesthetics)

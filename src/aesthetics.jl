@@ -23,7 +23,7 @@ typealias NumericalAesthetic
     ymax,         NumericalAesthetic
 
     # dotted lines
-    linetype,     Maybe(LineType)
+#    linetype,     Maybe(LineType)
 
     # areas, ribbons
     fill,         Maybe(ColorValue)
