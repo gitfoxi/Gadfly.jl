@@ -9,6 +9,7 @@ before_install:
     - sudo apt-get update -qq -y
     - sudo apt-get install libpcre3-dev julia -y
     - sudo apt-get install git -y
+    - sudo apt-get install gdb -y
 script:
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
     - julia -e 'Pkg.init(); Pkg.add("Cairo"); Pkg.add("RDatasets")'
@@ -20,6 +21,6 @@ script:
     - ls -la /home/travis/.julia/Gadfly
     - ls -la
     - julia -e 'Pkg.pin("Gadfly"); Pkg.resolve()'
-    - julia ~/.julia/Gadfly/tests/test.jl
+    - cat script.gdb | gdb --args julia ~/.julia/Gadfly/tests/test.jl
 comment:
     - Go travis go
