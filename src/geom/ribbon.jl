@@ -93,7 +93,7 @@ function render(geom::RibbonGeometry, theme::Gadfly.Theme, aes::Gadfly.Aesthetic
     #    form = combine(forms...)
     #end
 
-    compose(form, fill(nothing), linewidth(theme.line_width))
+    compose(form, linewidth(theme.line_width))
 end
 
 
