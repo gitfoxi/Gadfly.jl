@@ -22,6 +22,13 @@ typealias NumericalAesthetic
     ymin,         NumericalAesthetic
     ymax,         NumericalAesthetic
 
+    # dotted lines
+    linetype,     Maybe(LineType)
+
+    # areas, ribbons
+    fill,         Maybe(ColorValue)
+    alpha,        Maybe(NumericalAesthetic)
+
     # fixed lines
     xintercept,   NumericalAesthetic
     yintercept,   NumericalAesthetic
