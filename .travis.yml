@@ -11,6 +11,7 @@ before_install:
     - sudo apt-get install git -y
     - sudo apt-get install gdb -y
 script:
+    - julia --version
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
     - julia -e 'Pkg.init(); Pkg.add("Cairo"); Pkg.add("RDatasets")'
     - julia -e 'run(`ln -s $(pwd()) $(Pkg.dir("Gadfly"))`);'
