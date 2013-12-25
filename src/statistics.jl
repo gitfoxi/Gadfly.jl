@@ -65,6 +65,7 @@ immutable HistogramStatistic <: Gadfly.StatisticElement
             new(minbincount, maxbincount)
         end
     end
+    nothing
 end
 
 
@@ -162,6 +163,7 @@ function apply_statistic(stat::HistogramStatistic,
     end
 
     aes.y_label = Scale.identity_formatter
+    nothing
 end
 
 
@@ -224,9 +226,52 @@ function apply_statistic(stat::DensityStatistic,
         aes.color = PooledDataArray(colors)
     end
     aes.y_label = Gadfly.Scale.identity_formatter
+    nothing
 end
 
 
+immutable ConfidenceStatistic <: Gadfly.StatisticElement
+    # Number of points sampled
+    n::Int
+    interval::Float64
+
+    function ConfidenceStatistic(n=300, interval=0.95)
+        # TODO: How are you going to use this here?
+        if !(0.0 < interval < 1.0)
+            error("Confidence interval must be 0.0 < interval < 1.0")
+        end
+        new(n, interval)
+    end
+end
+
+const confidence = ConfidenceStatistic
+
+element_aesthetics(::ConfidenceStatistic) = [:x, :ymin, :ymax]
+
+function aes_kde(x, n::Int)
+    # if aes.color === nothing
+        if !isa(x[1], Real)
+            error("Kernel density estimation only works on Real types.")
+        end
+
+        x_f64 = convert(Vector{Float64}, x)
+        # TODO: Still no idea why you would want a distribution with 1 or fewer
+        # bins.
+        window = n > 1 ? bandwidth(x_f64) : 0.1
+        f = kde(x_f64, window, n)
+        return (f.x, f.density)
+end
+
+function apply_statistic(stat::ConfidenceStatistic,
+                         scales::Dict{Symbol, Gadfly.ScaleElement},
+                         coord::Gadfly.CoordinateElement,
+                         aes::Gadfly.Aesthetics)
+    Gadfly.assert_aesthetics_defined("ConfidenceStatistic", aes, :x)
+
+    aes.x, aes.ymin = aes_kde(aes.x, stat.n)
+    aes.ymax = deepcopy(aes.ymin)
+    aes.y_label = Gadfly.Scale.identity_formatter
+end
 
 immutable Histogram2DStatistic <: Gadfly.StatisticElement
     xminbincount::Int
@@ -252,6 +297,7 @@ immutable Histogram2DStatistic <: Gadfly.StatisticElement
 
         new(xminbincount, xmaxbincount, yminbincount, ymaxbincount)
     end
+    nothing
 end
 
 
@@ -686,6 +732,7 @@ function apply_statistic(stat::SmoothStatistic,
         end
         aes.color = PooledDataArray(colors)
     end
+    nothing
 end
 
 end # module Stat

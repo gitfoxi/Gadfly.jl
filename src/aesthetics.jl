@@ -197,6 +197,7 @@ end
 # Returns:
 #   JSON data as a string.
 #
+# TODO: This is broken. There's no aes_vars anywhere else
 function json(a::Aesthetics)
     join([string(a, ":", json(getfield(a, var))) for var in aes_vars], ",\n")
 end

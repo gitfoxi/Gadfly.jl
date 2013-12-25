@@ -26,7 +26,7 @@ import Base: copy, push!, start, next, done, has, show, getindex, cat,
              writemime, isfinite
 
 export Plot, Layer, Theme, Scale, Coord, Geom, Guide, Stat, render, plot,
-       layer, @plot, spy, set_default_plot_size, prepare_display
+       layer, @plot, spy, set_default_plot_size, prepare_display, json
 
 
 # Re-export some essentials from Compose

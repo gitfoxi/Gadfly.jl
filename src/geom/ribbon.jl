@@ -2,7 +2,6 @@
 # Ribbon geometry is like a fill between two ribbons
 immutable RibbonGeometry <: Gadfly.GeometryElement
     default_statistic::Gadfly.StatisticElement
-
     # Do not reorder points along the x-axis.
     preserve_order::Bool
 
@@ -22,18 +21,22 @@ const ribbon = RibbonGeometry
 #end
 #
 #
-#function smooth(; smoothing::Float64=0.75)
-#    RibbonGeometry(Gadfly.Stat.smooth(smoothing=smoothing))
-#end
+function smooth(; smoothing::Float64=0.75)
+    RibbonGeometry(Gadfly.Stat.smooth(smoothing=smoothing))
+end
 #
 #
-#function default_statistic(geom::RibbonGeometry)
-#    geom.default_statistic
-#end
+function default_statistic(geom::RibbonGeometry)
+    geom.default_statistic
+end
+
+function confidence()
+    RibbonGeometry(Gadfly.Stat.confidence())
+end
 
 
 function element_aesthetics(::RibbonGeometry)
-    [:x, :ymin, :ymax, :color, :alpha, :fill, :size] # , :linetype]
+    [:x, :y, :ymin, :ymax, :color, :alpha, :fill, :size] # , :linetype]
 end
 
 
@@ -56,9 +59,19 @@ function render(geom::RibbonGeometry, theme::Gadfly.Theme, aes::Gadfly.Aesthetic
     default_aes.color = PooledDataArray(ColorValue[theme.default_color])
     aes = inherit(aes, default_aes)
 
+#    @show json(aes)
     #if length(aes.color) == 1
+    if aes.ymin != nothing && aes.ymax !=nothing
         ymin_points = {(x, ymin) for (x, ymin) in zip(aes.x, aes.ymin)}
         ymax_points = {(x, ymax) for (x, ymax) in zip(aes.x, aes.ymax)}
+    elseif aes.y != nothing
+        # TODO: span is confidence interval
+        span = (maximum(aes.y) - minimum(aes.y)) / 10.
+        ymin_points = {(x, ymin) for (x, ymin) in zip(aes.x, aes.y - span)}
+        ymax_points = {(x, ymax) for (x, ymax) in zip(aes.x, aes.y + span)}
+    else
+        error("Ribbon needs 'y' or 'ymin' and 'ymax'")
+    end
         #if !geom.preserve_order
             sort!(ymin_points)
             sort!(ymax_points, rev=true)
